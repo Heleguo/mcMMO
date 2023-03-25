@@ -1,0 +1,52 @@
+# This workflow automatically tests new commits and pull requests as they come in.
+# Note that this does not upload any artifacts, you will need to compile mcMMO manually
+# if you wish to create the actual jar.
+name: Build
+
+on:
+  # We run our tests whenever the pom or a source file was touched.
+  # There is no need to run Maven when only the changelog was touched.
+  # We may also want to re-run this workflow when the workflow file itself
+  # was updated too.
+  push:
+    paths:
+    - 'src/**'
+    - 'pom.xml'
+    - '.github/workflows/maven.yml'
+
+  # Whenever someone submits a new pull request which modified the pom or a source file,
+  # we want to ensure it compiles successfully and that all tests will pass.
+  pull_request:
+    paths:
+    - 'src/**'
+    - 'pom.xml'
+
+jobs:
+  compile:
+    name: Maven compiler
+    runs-on: ubuntu-latest
+    steps:
+
+    # 1. Check out the current working tree
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # 2. Setup Java 17 JDK (Adopt)
+    - name: Java 17 setup
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'adopt'
+        java-package: jdk
+        java-version: '17'
+
+
+    # 3. Build via Maven 
+    - name: Build via Maven
+      run: mvn clean package install
+      
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      if: success()
+      with:
+        name: Guole
+        path: ./*
